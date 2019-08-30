@@ -151,6 +151,8 @@ fabric.properties
 # Sonarlint plugin
 .idea/sonarlint
 
+.idea
+
 ### macOS ###
 # General
 .DS_Store
