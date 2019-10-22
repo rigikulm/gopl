@@ -22,7 +22,11 @@ func main() {
 			log.Print(err)
 			continue
 		}
-		handleConn(conn)  // Handle one connection at a time
+		// Handles one connection at a time
+		// handleConn(conn)  // Handle one connection at a time
+
+		// This handles multiple connections with go routines
+		go handleConn(conn)
 	}
 }
 
