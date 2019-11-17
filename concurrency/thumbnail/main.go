@@ -21,20 +21,30 @@ import (
 	"lemler.org/thumbnail/internal/pkg/thumbnail"
 )
 
-func main() {
-	input := bufio.NewScanner(os.Stdin)
-	for input.Scan() {
-		fname := input.Text()
-		thumb, err := thumbnail.ImageFile(fname)
+func makeThumbnails(filenames []string) {
+	for _, f := range filenames {
+		thumb, err := thumbnail.ImageFile(f)
 		if err != nil {
 			log.Print(err)
 			continue
 		}
 		fmt.Println(thumb)
-		//log.Print("Got: ", fname)
-		//fmt.Println("Input: ", fname)
+	}
+}
+
+func main() {
+	var filenames []string
+
+	// Get a list of filenames from stdin
+	fmt.Println("Enter a list of .jpg filenames (one per line). Enter Ctrl-D when finished.")
+	input := bufio.NewScanner(os.Stdin)
+	for input.Scan() {
+		fname := input.Text()
+		filenames = append(filenames, fname)
 	}
 	if err := input.Err(); err != nil {
 		log.Fatal(err)
 	}
+
+	makeThumbnails(filenames)
 }
