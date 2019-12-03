@@ -21,16 +21,37 @@ import (
 	"lemler.org/thumbnail/internal/pkg/thumbnail"
 )
 
+// Make Thumbnails for the specified files in parallel.
+// Have the inner go routine report its completion to the outer
+// go routine by sending an event.
 func makeThumbnails(filenames []string) {
+	ch := make(chan struct{})
 	for _, f := range filenames {
-		thumb, err := thumbnail.ImageFile(f)
-		if err != nil {
-			log.Print(err)
-			continue
-		}
-		fmt.Println(thumb)
+		go func(f string) {
+			fmt.Println("Processing ", f)
+			// Ignoring errors
+			thumbnail.ImageFile(f)
+			ch <- struct{}{}
+		}(f)
+	}
+
+	// Wait for go routines to complete
+	for range filenames {
+		<-ch
 	}
 }
+
+// Original Version
+//func makeThumbnails(filenames []string) {
+//	for _, f := range filenames {
+//		thumb, err := thumbnail.ImageFile(f)
+//		if err != nil {
+//			log.Print(err)
+//			continue
+//		}
+//		fmt.Println(thumb)
+//	}
+//}
 
 func main() {
 	var filenames []string
