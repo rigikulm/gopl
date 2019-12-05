@@ -16,30 +16,62 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"lemler.org/thumbnail/internal/pkg/thumbnail"
 	"log"
 	"os"
-	"lemler.org/thumbnail/internal/pkg/thumbnail"
 )
 
 // Make Thumbnails for the specified files in parallel.
 // Have the inner go routine report its completion to the outer
 // go routine by sending an event.
-func makeThumbnails(filenames []string) {
-	ch := make(chan struct{})
+type result struct {
+	thumbfile string
+	size      int64
+	err       error
+}
+
+// Make Thumbnails(5) for the specified files in parallel.
+// Have the inner go routine report its completion to the outer
+// go routine by sending an event.
+func makeThumbnails(filenames []string) (thumbfiles []result, err error) {
+	ch := make(chan result, len(filenames))
 	for _, f := range filenames {
 		go func(f string) {
-			fmt.Println("Processing ", f)
-			// Ignoring errors
-			thumbnail.ImageFile(f)
-			ch <- struct{}{}
+			var r result
+			r.thumbfile, r.err = thumbnail.ImageFile(f)
+			if r.err == nil {
+				info, _ := os.Stat(r.thumbfile)
+				r.size = info.Size()
+			}
+			ch <- r
 		}(f)
 	}
 
-	// Wait for go routines to complete
 	for range filenames {
-		<-ch
+		res := <-ch
+		thumbfiles = append(thumbfiles, res)
 	}
+
+	return thumbfiles, nil
 }
+
+// makeThumbnails3 from the book
+//func makeThumbnails(filenames []string) {
+//	ch := make(chan struct{})
+//	for _, f := range filenames {
+//		go func(f string) {
+//			fmt.Println("Processing ", f)
+//			// Ignoring errors
+//			thumbnail.ImageFile(f)
+//			ch <- struct{}{}
+//		}(f)
+//	}
+//
+//	// Wait for go routines to complete
+//	for range filenames {
+//		<-ch
+//	}
+//}
 
 // Original Version
 //func makeThumbnails(filenames []string) {
@@ -67,5 +99,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	makeThumbnails(filenames)
+	thumbfiles, _ := makeThumbnails(filenames)
+	fmt.Println(thumbfiles)
 }
